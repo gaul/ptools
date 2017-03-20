@@ -15,7 +15,6 @@
 package main
 
 // TODO: -h, --human-readable
-// TODO: -s, --summarize
 // TODO: -x, --one-file-system
 // TODO: test symlinks
 
@@ -31,7 +30,8 @@ import (
 )
 
 // TODO: -k
-var blockSize = flag.IntP("block-size", "B", 1024, "scale sizes by SIZE before printing them.")
+var blockSize = flag.IntP("block-size", "B", 1024, "scale sizes by SIZE before printing them")
+var summarize = flag.BoolP("summarize", "s", false, "display only a total for each argument")
 
 var sem *semaphore.Semaphore
 
@@ -117,7 +117,9 @@ func du(name string, wgWg *sync.WaitGroup, sumSum *int64, err2 *error) error {
 
 	wg.Wait()
 	atomic.AddInt64(sumSum, atomic.LoadInt64(&sum))
-	fmt.Printf("%d\t%s\n", atomic.LoadInt64(&sum), name)
+	if !*summarize {
+		fmt.Printf("%d\t%s\n", atomic.LoadInt64(&sum), name)
+	}
 	return nil
 }
 
@@ -136,7 +138,10 @@ func main() {
 		args = append(args, ".")
 	}
 
-	err, _ := Du(args...)
+	err, sum := Du(args...)
+	if *summarize {
+		fmt.Printf("%d\t%s\n", sum, args[0])
+	}
 	if err != nil {
 		os.Exit(1)
 	}
